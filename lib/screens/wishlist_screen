@@ -1,0 +1,65 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/wishlist_service.dart';
+import '../models/course.dart';
+
+class WishlistScreen extends StatelessWidget {
+  const WishlistScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final wishlistService = Provider.of<WishlistService>(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Wishlist'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.compare_arrows),
+            onPressed: () async {
+              try {
+                await wishlistService.sendComparison();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Comparison sent successfully!'))
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}'))
+                );
+              }
+            },
+          ),
+        ],
+      ),
+      body: wishlistService.wishlist.isEmpty
+          ? const Center(child: Text('No courses in wishlist'))
+          : ListView.builder(
+              itemCount: wishlistService.wishlist.length,
+              itemBuilder: (context, index) {
+                final course = wishlistService.wishlist[index];
+                return Dismissible(
+                  key: Key(course.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (_) => wishlistService.toggleWishlist(course),
+                  child: ListTile(
+                    leading: Image.network(course.imageUrl),
+                    title: Text(course.title),
+                    subtitle: Text(
+                      '${course.platformName} • ${course.getPriceText()}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.favorite, color: Colors.red),
+                      onPressed: () => wishlistService.toggleWishlist(course),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
