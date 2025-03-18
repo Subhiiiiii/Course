@@ -1,0 +1,30 @@
+1. Deprecate course_data.dart (Optional)
+Purpose: Stop using hardcoded data and switch to API calls.
+Action:
+
+Keep the file as reference (or delete if unused).
+
+Remove all references to CourseData.getCourses() and CourseData.getPlatforms() from your UI code.
+
+
+2. Update Navigation
+Wherever you previously used the hardcoded list:
+
+// Old navigation (using static data)
+Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => OldCourseListScreen()),
+);
+
+// New navigation (using dynamic search)
+Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => CourseSearchScreen()),
+);
+
+3.Android Permissions
+Add internet access to android/app/src/main/AndroidManifest.xml:
+<uses-permission android:name="android.permission.INTERNET" />
+
+4 Error handling (optional): if everything done, can look into it.
+
