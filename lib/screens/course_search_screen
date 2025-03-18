@@ -1,0 +1,113 @@
+import 'package:flutter/material.dart';
+import '../models/course.dart';
+import '../services/course_service.dart';
+
+class CourseSearchScreen extends StatefulWidget {
+  @override
+  _CourseSearchScreenState createState() => _CourseSearchScreenState();
+}
+
+class _CourseSearchScreenState extends State<CourseSearchScreen> {
+  List<Course> _courses = [];
+  bool _isLoading = false;
+  String _searchQuery = '';
+  String _error = '';
+
+  Future<void> _performSearch() async {
+    if (_searchQuery.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+
+    try {
+      final results = await CourseService.searchCourses(_searchQuery);
+      setState(() => _courses = results);
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: TextField(
+          decoration: InputDecoration(
+            hintText: 'Search courses...',
+            border: InputBorder.none,
+            suffixIcon: IconButton(
+              icon: Icon(Icons.search),
+              onPressed: _performSearch,
+            ),
+          ),
+          onChanged: (value) => _searchQuery = value,
+          onSubmitted: (_) => _performSearch(),
+        ),
+      ),
+      body: _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) return Center(child: CircularProgressIndicator());
+    if (_error.isNotEmpty) return Center(child: Text(_error));
+    if (_courses.isEmpty) return Center(child: Text('No courses found'));
+    
+    return ListView.builder(
+      itemCount: _courses.length,
+      itemBuilder: (context, index) => _CourseListItem(_courses[index]),
+    );
+  }
+}
+
+class _CourseListItem extends StatelessWidget {
+  final Course course;
+
+  _CourseListItem(this.course);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: ListTile(
+        contentPadding: EdgeInsets.all(16),
+        leading: Image.network(
+          course.imageUrl,
+          width: 80,
+          height: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Icon(Icons.broken_image),
+        ),
+        title: Text(course.title, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(course.instructor),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Chip(
+                  label: Text(course.platformName),
+                  backgroundColor: Colors.blue[100],
+                ),
+                SizedBox(width: 8),
+                Text(course.getPriceText()),
+              ],
+            ),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('⭐ ${course.rating.toStringAsFixed(1)}'),
+            Text('(${course.totalRatings.formatCompact()})'),
+          ],
+        ),
+      ),
+    );
+  }
+}
