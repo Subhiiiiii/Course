@@ -1,0 +1,17 @@
+Course Item Modification
+in the course_search_screen
+
+// Add inside your ListTile widget
+trailing: Consumer<WishlistService>(
+  builder: (context, wishlistService, _) {
+    return IconButton(
+      icon: Icon(
+        wishlistService.wishlist.contains(course)
+            ? Icons.favorite
+            : Icons.favorite_border,
+        color: Colors.red,
+      ),
+      onPressed: () => wishlistService.toggleWishlist(course),
+    );
+  },
+),
