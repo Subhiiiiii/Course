@@ -1,0 +1,59 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import '../models/course.dart';
+
+class WishlistService extends ChangeNotifier {
+  final List<Course> _wishlist = [];
+
+  List<Course> get wishlist => _wishlist;
+
+  void toggleWishlist(Course course) {
+    if (_wishlist.contains(course)) {
+      _wishlist.remove(course);
+    } else {
+      _wishlist.add(course);
+    }
+    notifyListeners();
+  }
+
+  Future<File> _createComparisonFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/course_comparison.json');
+    
+    final extractedData = _wishlist.map((course) => {
+      'id': course.id,
+      'title': course.title,
+      'price': course.price,
+      'platform': course.platformName,
+      'url': course.courseUrl,
+      'skills': course.skills
+    }).toList();
+
+    await file.writeAsString(json.encode(extractedData));
+    return file;
+  }
+
+  Future<void> sendComparison() async {
+    try {
+      final comparisonFile = await _createComparisonFile();
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://your-backend.com/api/compare')
+      );
+
+      request.files.add(await http.MultipartFile.fromPath(
+        'comparison',
+        comparisonFile.path,
+        contentType: MediaType('application', 'json'),
+      ));
+
+      final response = await request.send();
+      if (response.statusCode != 200) throw Exception('Comparison failed');
+    } catch (e) {
+      throw Exception('Comparison error: ${e.toString()}');
+    }
+  }
+}
